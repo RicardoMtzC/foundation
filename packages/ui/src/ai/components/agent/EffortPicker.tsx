@@ -79,7 +79,18 @@ export default function EffortPicker({
       }}
       trigger={
         <button type="button" className={className ?? chipClassName} disabled={disabled}>
-          <span className="truncate">{shown}</span>
+          {/* Every label shares one cell, so the chip keeps its widest label's width and what sits beside it holds still. */}
+          <span className="grid min-w-0">
+            {[...new Set([shown, ...STOPS.map(label)])].map((text) => (
+              <span
+                key={text}
+                aria-hidden={text === shown ? undefined : true}
+                className={cx('col-start-1 row-start-1 truncate', text !== shown && 'invisible')}
+              >
+                {text}
+              </span>
+            ))}
+          </span>
           <ChevronDownIcon className="h-3 w-3 shrink-0" aria-hidden="true" />
         </button>
       }

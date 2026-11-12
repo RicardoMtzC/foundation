@@ -11,14 +11,29 @@ const open = async () => {
 describe('EffortPicker', () => {
   it('names the level set, and the model default when there is none', () => {
     const { rerender } = render(<EffortPicker effort="" onPick={vi.fn()} />)
-    expect(screen.getByRole('button')).toHaveTextContent('Default effort')
+    expect(screen.getByRole('button', { name: 'Default effort' })).toBeInTheDocument()
     rerender(<EffortPicker effort="xhigh" onPick={vi.fn()} />)
-    expect(screen.getByRole('button')).toHaveTextContent('Extra high effort')
+    expect(screen.getByRole('button', { name: 'Extra high effort' })).toBeInTheDocument()
+  })
+
+  it('holds every label, so its width does not change with the level', () => {
+    const { rerender } = render(<EffortPicker effort="low" onPick={vi.fn()} />)
+    const holds = () =>
+      Array.from(
+        screen.getByRole('button').querySelectorAll('.grid > span'),
+        (span) => span.textContent,
+      )
+    const atLow = holds()
+    expect(atLow).toEqual(
+      expect.arrayContaining(['Default effort', 'No reasoning', 'Extra high effort', 'Max effort']),
+    )
+    rerender(<EffortPicker effort="max" onPick={vi.fn()} />)
+    expect(new Set(holds())).toEqual(new Set(atLow))
   })
 
   it('shows a level it does not know as it was given', () => {
     render(<EffortPicker effort="turbo" onPick={vi.fn()} />)
-    expect(screen.getByRole('button')).toHaveTextContent('turbo')
+    expect(screen.getByRole('button', { name: 'turbo' })).toBeInTheDocument()
   })
 
   it('opens at the level set, and names each stop as it is reached', async () => {
