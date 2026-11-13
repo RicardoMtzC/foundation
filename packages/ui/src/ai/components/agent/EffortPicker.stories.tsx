@@ -1,6 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useState } from 'react'
+import { ChevronDownIcon } from '../../../icons'
 import { EFFORT_LEVELS, type EffortLevel } from '../../agent/effort'
+import { chipClassName } from '../../ui/chip'
 import EffortPicker from './EffortPicker'
 
 const meta: Meta = {
@@ -91,4 +93,19 @@ export const Max: StoryObj<PickerArgs> = {
 export const Disabled: StoryObj<PickerArgs> = {
   ...Chip,
   args: { ...Chip.args, disabled: true },
+}
+
+// Right-aligned beside another chip, as a composer's toolbar sets it: stepping the level leaves the other chip where it is.
+export const InToolbar: StoryObj<PickerArgs> = {
+  ...Chip,
+  args: { ...Chip.args, effort: 'low', open: true },
+  render: (args) => (
+    <div className="flex w-[420px] items-center justify-end gap-1">
+      <button type="button" className={chipClassName}>
+        <span className="truncate">Model</span>
+        <ChevronDownIcon className="h-3 w-3 shrink-0" aria-hidden="true" />
+      </button>
+      <Picker key={args.effort} {...args} />
+    </div>
+  ),
 }
