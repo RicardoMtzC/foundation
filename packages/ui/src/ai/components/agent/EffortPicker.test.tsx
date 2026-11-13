@@ -11,9 +11,9 @@ const open = async () => {
 describe('EffortPicker', () => {
   it('names the level set, and the default level when there is none', () => {
     const { rerender } = render(<EffortPicker effort="" onPick={vi.fn()} />)
-    expect(screen.getByRole('button', { name: 'High effort' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'high' })).toBeInTheDocument()
     rerender(<EffortPicker effort="xhigh" onPick={vi.fn()} />)
-    expect(screen.getByRole('button', { name: 'Extra high effort' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'xhigh' })).toBeInTheDocument()
   })
 
   it('holds every label, so its width does not change with the level', () => {
@@ -24,9 +24,7 @@ describe('EffortPicker', () => {
         (span) => span.textContent,
       )
     const atLow = holds()
-    expect(atLow).toEqual(
-      expect.arrayContaining(['Low effort', 'Medium effort', 'Extra high effort', 'Max effort']),
-    )
+    expect(atLow).toEqual(expect.arrayContaining(['low', 'medium', 'xhigh', 'max']))
     rerender(<EffortPicker effort="max" onPick={vi.fn()} />)
     expect(new Set(holds())).toEqual(new Set(atLow))
   })
@@ -40,7 +38,7 @@ describe('EffortPicker', () => {
     const onPick = vi.fn()
     render(<EffortPicker effort={undefined} onPick={onPick} />)
     const slider = await open()
-    expect(slider).toHaveAttribute('aria-valuetext', 'High effort')
+    expect(slider).toHaveAttribute('aria-valuetext', 'high')
     fireEvent.keyDown(slider, { key: 'ArrowLeft' })
     expect(onPick).toHaveBeenCalledExactlyOnceWith('medium')
   })
@@ -48,7 +46,7 @@ describe('EffortPicker', () => {
   it('opens at the level set, and names each stop as it is reached', async () => {
     render(<EffortPicker effort="high" onPick={vi.fn()} />)
     const slider = await open()
-    expect(slider).toHaveAttribute('aria-valuetext', 'High effort')
+    expect(slider).toHaveAttribute('aria-valuetext', 'high')
     // Five levels, the same for every model.
     expect(slider).toHaveAttribute('min', '0')
     expect(slider).toHaveAttribute('max', '4')
@@ -63,7 +61,7 @@ describe('EffortPicker', () => {
     fireEvent.keyDown(slider, { key: 'ArrowRight' })
     expect(onPick).toHaveBeenCalledExactlyOnceWith('xhigh')
     rerender(<EffortPicker effort="xhigh" onPick={onPick} />)
-    expect(slider).toHaveAttribute('aria-valuetext', 'Extra high effort')
+    expect(slider).toHaveAttribute('aria-valuetext', 'xhigh')
     fireEvent.keyDown(slider, { key: 'ArrowLeft' })
     expect(onPick).toHaveBeenLastCalledWith('high')
     expect(onPick).toHaveBeenCalledTimes(2)
