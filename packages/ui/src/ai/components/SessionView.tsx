@@ -8,6 +8,7 @@ import {
 } from 'react'
 import { useMarkdownReady } from '../../components/Markdown'
 import { useChat } from '../core/ChatProvider'
+import { listenWhileShown } from '../core/onScreen'
 import useDragDrop from '../core/useDragDrop'
 import { escapeClosesLayer } from '../core/useKeyboardShortcuts'
 import type { ApprovalAnswerValue, ChatMessage as Message } from '../types'
@@ -142,18 +143,21 @@ export default function SessionView({
       }
     : { messages: [], allMessages: [], streamingMessage: null, queuedMessages: [] }
 
-  // Escape stops the turn, wherever the turn runs.
+  // Escape stops the turn, wherever the turn runs, while the view is on screen.
   useEffect(() => {
     if (!running) {
       return
     }
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !e.defaultPrevented && !escapeClosesLayer(e.target)) {
-        stop()
-      }
-    }
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
+    return listenWhileShown(
+      window,
+      () => viewRef.current,
+      (e) => e.key === 'Escape',
+      (e) => {
+        if (!e.defaultPrevented && !escapeClosesLayer(e.target)) {
+          stop()
+        }
+      },
+    )
   }, [running, stop])
 
   const editable = (id: string) => messages.find((m) => m.id === id && m.role === 'user')
@@ -206,7 +210,7 @@ export default function SessionView({
 
   if (loading && !error) {
     return (
-      <div className="flex h-full flex-col bg-(--theme-panel-bg)">
+      <div ref={viewRef} className="flex h-full flex-col bg-(--theme-panel-bg)">
         {banners}
         <div className="flex-1" />
         {input}

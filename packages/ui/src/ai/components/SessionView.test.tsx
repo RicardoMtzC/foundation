@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest'
 import { act, fireEvent, render, screen } from '@testing-library/react'
-import { type ComponentProps, useImperativeHandle } from 'react'
+import { type ComponentProps, type CSSProperties, useImperativeHandle } from 'react'
+import { mockCheckVisibility } from '../../test/visibility'
 import type { ChatMessage as Message } from '../types'
 import type ChatInput from './ChatInput'
 import type ChatMessageList from './ChatMessageList'
@@ -59,6 +60,12 @@ vi.mock('./ChatActivity', () => ({
 
 const ask: Message = { id: 'u1', role: 'user', content: 'stop it', parentId: 'root' }
 const reply: Message = { id: 'a1', role: 'assistant', content: 'done', parentId: 'u1' }
+
+let restoreVisibility: () => void
+beforeAll(() => {
+  restoreVisibility = mockCheckVisibility()
+})
+afterAll(() => restoreVisibility())
 
 beforeEach(() => {
   markdown.ready = true
@@ -160,6 +167,59 @@ describe('SessionView', () => {
     render(<SessionView sessionKey="s1" messages={[ask]} onSend={vi.fn()} />)
     pressEscape()
     expect(chat.stopStreaming).toHaveBeenCalledTimes(1)
+  })
+
+  it.each([
+    ['loaded', false],
+    ['loading', true],
+  ])(
+    'leaves Escape to the page that shows while the host keeps the view mounted and hidden, %s',
+    (_, loading) => {
+      const onStop = vi.fn()
+      const view = (style: CSSProperties) => (
+        <div style={style}>
+          <SessionView
+            sessionKey="s1"
+            messages={[ask]}
+            onSend={vi.fn()}
+            loading={loading}
+            turn={{ running: true, onStop }}
+          />
+        </div>
+      )
+      const { rerender } = render(view({ display: 'none' }))
+      pressEscape()
+      rerender(view({ visibility: 'hidden' }))
+      pressEscape()
+      expect(onStop).not.toHaveBeenCalled()
+
+      rerender(view({}))
+      pressEscape()
+      expect(onStop).toHaveBeenCalledTimes(1)
+    },
+  )
+
+  // The page's own Escape handler can show the view again before this one runs.
+  it('leaves Escape to the page when the page shows the view again on that Escape', () => {
+    const onStop = vi.fn()
+    render(
+      <div data-testid="frame" style={{ visibility: 'hidden' }}>
+        <SessionView
+          sessionKey="s1"
+          messages={[ask]}
+          onSend={vi.fn()}
+          turn={{ running: true, onStop }}
+        />
+      </div>,
+    )
+    const frame = screen.getByTestId('frame')
+    const showChat = () => {
+      frame.style.visibility = ''
+    }
+    document.addEventListener('keydown', showChat)
+    pressEscape(document.body)
+    document.removeEventListener('keydown', showChat)
+    expect(onStop).not.toHaveBeenCalled()
   })
 
   it('leaves Escape to an open dialog', () => {
