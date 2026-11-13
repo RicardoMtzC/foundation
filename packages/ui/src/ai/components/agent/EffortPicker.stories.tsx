@@ -56,7 +56,7 @@ export const Chip: StoryObj<PickerArgs> = {
     effort: {
       control: 'select',
       options: ['', ...EFFORT_LEVELS],
-      description: "The level set; empty leaves it to the model's default",
+      description: 'The level set; empty is the default level',
     },
     open: { control: 'boolean', description: 'Opens the slider' },
     className: {
@@ -79,10 +79,15 @@ export const Open: StoryObj<PickerArgs> = {
   args: { ...Chip.args, open: true },
 }
 
-// No level set: the thumb sits on the model's default, off the colored scale.
-export const ModelDefault: StoryObj<PickerArgs> = {
+// No level set, as before a session starts: the default level.
+export const Unset: StoryObj<PickerArgs> = {
   ...Chip,
   args: { ...Chip.args, effort: '', open: true },
+}
+
+export const Low: StoryObj<PickerArgs> = {
+  ...Chip,
+  args: { ...Chip.args, effort: 'low', open: true },
 }
 
 export const Max: StoryObj<PickerArgs> = {

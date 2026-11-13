@@ -9,9 +9,9 @@ const open = async () => {
 }
 
 describe('EffortPicker', () => {
-  it('names the level set, and the model default when there is none', () => {
+  it('names the level set, and the default level when there is none', () => {
     const { rerender } = render(<EffortPicker effort="" onPick={vi.fn()} />)
-    expect(screen.getByRole('button', { name: 'Default effort' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'High effort' })).toBeInTheDocument()
     rerender(<EffortPicker effort="xhigh" onPick={vi.fn()} />)
     expect(screen.getByRole('button', { name: 'Extra high effort' })).toBeInTheDocument()
   })
@@ -25,7 +25,7 @@ describe('EffortPicker', () => {
       )
     const atLow = holds()
     expect(atLow).toEqual(
-      expect.arrayContaining(['Default effort', 'No reasoning', 'Extra high effort', 'Max effort']),
+      expect.arrayContaining(['Low effort', 'Medium effort', 'Extra high effort', 'Max effort']),
     )
     rerender(<EffortPicker effort="max" onPick={vi.fn()} />)
     expect(new Set(holds())).toEqual(new Set(atLow))
@@ -36,13 +36,22 @@ describe('EffortPicker', () => {
     expect(screen.getByRole('button', { name: 'turbo' })).toBeInTheDocument()
   })
 
+  it('opens at the default level when none is set', async () => {
+    const onPick = vi.fn()
+    render(<EffortPicker effort={undefined} onPick={onPick} />)
+    const slider = await open()
+    expect(slider).toHaveAttribute('aria-valuetext', 'High effort')
+    fireEvent.keyDown(slider, { key: 'ArrowLeft' })
+    expect(onPick).toHaveBeenCalledExactlyOnceWith('medium')
+  })
+
   it('opens at the level set, and names each stop as it is reached', async () => {
     render(<EffortPicker effort="high" onPick={vi.fn()} />)
     const slider = await open()
     expect(slider).toHaveAttribute('aria-valuetext', 'High effort')
-    // The model's default and seven levels.
+    // Five levels, the same for every model.
     expect(slider).toHaveAttribute('min', '0')
-    expect(slider).toHaveAttribute('max', '7')
+    expect(slider).toHaveAttribute('max', '4')
     expect(screen.getByText('Faster')).toBeInTheDocument()
     expect(screen.getByText('Smarter')).toBeInTheDocument()
   })
@@ -61,7 +70,7 @@ describe('EffortPicker', () => {
   })
 
   it.each([
-    ['Home', ''],
+    ['Home', 'low'],
     ['End', 'max'],
   ])('%s goes to the end of the scale', async (key, picked) => {
     const onPick = vi.fn()
